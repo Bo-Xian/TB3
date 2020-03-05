@@ -1,0 +1,21 @@
+#程式啟動流程:
+    1.$cd robotrace
+    (下面每個指令前先ctrl+shift+T另開分頁,並輸入$. devel/setup.bash)
+    2.$roscore
+    3.roslaunch turtlebot3_bringup wrs.launch
+    4.roslaunch vision vision.launch
+    5.rosrun vision image_converter
+    6.rosrun strategy strategy2019.py
+    7.開啟tb3_web,strategy2019輸出ready後,網頁點選start開始程式
+    8.策略完成後按stop停止程式,放回原點後按reset將定位值初始化 
+
+=================================================
+
+#待更新及製作項目:
+    1.射門機構設置與控制
+    2.在網頁介面使用鍵盤控制機器人移動(參考FIRA正規賽網頁介面)
+	3.加分球系統
+    4.雙攝影機影像讀取(可用於偵測球門位置用於偵測球門位置)
+    5.避障系統優化
+    6.自製平台組開發(可能需要使用九軸感測器用於定位,以及雷射掃描器用於障礙物偵測)
+    

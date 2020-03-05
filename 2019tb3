@@ -1,0 +1,30 @@
+# cpu temperture
+vcgencmd measure_temp
+
+#set permission
+sudo chmod 777 /dev/ttyU*
+sudo chmod 777 /dev/ttyA*
+//======================
+
+# start robot motor and lidar
+roslaunch turtlebot3_bringup turtlebot3_robot.launch
+
+# keyboard control
+roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
+
+# raspi camera
+roslaunch raspicam_node camerav2_410x308_30fps.launch 
+
+# vision 
+roslaunch vision vision.launch
+
+# image converter
+rosrun vision image_converter
+
+#open arm
+rostopic pub /tb3/arm std_msgs/Int32 "data: 0" 
+
+//======================
+#Run hlds_laser_publisher Node with Rviz
+roslaunch hls_lfcd_lds_driver view_hlds_laser.launch
+

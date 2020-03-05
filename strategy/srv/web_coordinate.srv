@@ -1,0 +1,6 @@
+bool set_up
+float32[] x_axis
+float32[] y_axis
+float32[] z_axis
+---
+bool coordinate_ready

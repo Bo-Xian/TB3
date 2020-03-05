@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="multi_robot_name" default=""/>
+  <arg name="set_lidar_frame_id" default="base_scan"/>
+ 
+  <include file="$(find turtlebot3_bringup)/launch/turtlebot3_core.launch">
+    <arg name="multi_robot_name" value="$(arg multi_robot_name)"/>
+  </include>
+  <include file="$(find turtlebot3_bringup)/launch/turtlebot3_lidar.launch">
+    <arg name="set_frame_id" value="$(arg set_lidar_frame_id)"/>
+  </include>
+  <node pkg="turtlebot3_bringup" type="turtlebot3_diagnostics" name="turtlebot3_diagnostics" output="screen"/>
+
+  <include file="$(find vision)/launch/vision.launch"></include>
+  <node pkg="motion" type="motion_detection" name="motion_detection" respawn="true" respawn_delay="5"/>
+  <node pkg="motion" type="motion" name="motion" respawn="true" respawn_delay="5"/>
+  <node pkg="vision" type="image_converter" name="image_converter" respawn="true" respawn_delay="5"/>
+</launch>
