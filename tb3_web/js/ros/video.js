@@ -52,7 +52,7 @@ function Open_Camera() {
             //video.position="relative";
             video.style.top = "40%"
             video.style.height = "60%";
-            console.log(mode);
+            console.log('mask : '+mode);
             switch (mode) {
                 case 0:
                     Pub_VideoMode(0);

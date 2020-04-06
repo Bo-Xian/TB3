@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<launch> 
+<launch>
   <rosparam command="load" file="$(find vision)/config/tb3.yaml"/>
   <!--include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
     <arg name="unregister_timeout" value="5.0"/>

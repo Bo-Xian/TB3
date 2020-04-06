@@ -9,7 +9,7 @@
     <param name="hFlip" value="true"/>
     <param name="vFlip" value="true"/>
 
-    <param name="camera_frame_id" value="raspicam"/> 
+    <param name="camera_frame_id" value="raspicam"/>
 
   </node>
 

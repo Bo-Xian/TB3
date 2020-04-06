@@ -11,6 +11,7 @@ from std_msgs.msg import Bool
 from std_msgs.msg import Empty as msg_Empty
 from std_msgs.msg import Int32
 from counter import TimeCounter
+# from strategy.srv import web_coordinate,web_coordinateResponse
 import time
 import numpy as np
 import math
@@ -47,7 +48,7 @@ def Rad2Deg(angle):  # radius to degree
     return angle * 180 / math.pi
 
 
-def Norm_Angle(angle):  #360° to +-180°
+def Norm_Angle(angle):  # 360° to +-180°
     if(angle > 180):
         angle -= 360
     elif(angle < -180):
@@ -192,13 +193,13 @@ class NodeHandle(object):
 
     def Set_Start(self, msg):
         self._start = msg.data
-        if self._start==0:
+        if self._start == 0:
             print('stop')
             self.Robot_Stop()
-        elif self._start==1:
-             print('start')
+        elif self._start == 1:
+            print('start')
         else:
-             print('keybordcontrol')
+            print('keybordcontrol')
 
     def Set_Balls(self, msg):
         self._ballsColor = msg.data[0]  # 0red 1blue 2yellow
@@ -398,7 +399,7 @@ class Strategy(NodeHandle):
 
     # strategy
     def Init_Strategy(self):
-        print ("Init_Strategy")
+        print("Init_Strategy")
         self.state = 0
         self.behavior = BEGINER
         self.initpos = [[0.1, 0.0]]
@@ -1058,7 +1059,7 @@ class Strategy(NodeHandle):
         self._behavior = self.behavior_to_strings(self.behavior)
         self._color = self.color_to_strings(self.ballcolor)
         self._double_point = self.color_to_strings(self._double)
-        if self._start==1:
+        if self._start == 1:
             print(self._behavior, self.state)
             self.Robot_Moving()
             switcher = {
@@ -1073,8 +1074,7 @@ class Strategy(NodeHandle):
             run_Process = switcher.get(self.behavior, self.Robot_Stop)
             run_Process()
 
-
-        elif self._start==-1:
+        elif self._start == -1:
             self.state = 0
             self.behavior = INIT
         else:

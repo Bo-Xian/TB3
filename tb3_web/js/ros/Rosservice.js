@@ -46,7 +46,7 @@ function savecall() {
     }
   );
 }
-//=====================================
+// =====================================
 var paramstrategyClient = new ROSLIB.Service({
   ros: ros,
   name: '/tb3/strategy/save',
@@ -70,9 +70,14 @@ function strategy_savecall() {
   );
 }
 
-var coordinateClient = new ROSLIB.Service({
+// var mapCoordinateClient = new ROSLIB.Service({
+//   ros: ros,
+//   name:'/strategy/web_coordinate',
+//   serviceType:'strategy/web_coordinate'
+// })
 
-})
+// var mapCoordinate_request = new ROSLIB.ServiceRequest({
+// });
 
 //=====================================
 

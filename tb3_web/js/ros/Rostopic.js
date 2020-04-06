@@ -51,6 +51,13 @@ var cmdVel = new ROSLIB.Topic({
     name: '/motion/cmd_vel',
     messageType: '/geometry_msgs/Twist'
 });
+
+var mapinfo = new ROSLIB.Topic({
+    ros: ros,
+    name: '/tb3/strategy/mapinfo',
+    messageType: '/strategy/mapcoord'
+});
+
 function PublishTopicCmdVel(vec3) {
     console.log(vec3);
     //vec3=parseFloat(vec3);
@@ -86,6 +93,17 @@ function shop_robot() {
     cmdVel.publish(twist);
     PublishTopicmoving();
 }
+
+
+function PublishTopicmap(x,y,z) {
+    var msg = new ROSLIB.Message({
+        x: {data : x },
+        y: {data : y },
+        z: {data : z },
+    });
+    mapinfo.publish(msg);
+}
+
 //===================================================================
 //HSV mode
 //color
@@ -234,15 +252,15 @@ function Change_HSVmode() {
     //Open_Camera('mask');
 }
 
-function SHOW_ALL_HSV(){
+function SHOW_ALL_HSV() {
     //for test
-    console.log('R1:'+RedBox);
-    console.log('R2:'+RedGoalBox);
-    console.log('B1:'+BlueBox);
-    console.log('B2:'+BlueGoalBox);
-    console.log('Y1:'+YellowBox);
-    console.log('Y3:'+YellowGoalBox);
-    console.log('CT'+VisionParam)
+    console.log('R1:' + RedBox);
+    console.log('R2:' + RedGoalBox);
+    console.log('B1:' + BlueBox);
+    console.log('B2:' + BlueGoalBox);
+    console.log('Y1:' + YellowBox);
+    console.log('Y3:' + YellowGoalBox);
+    console.log('CT' + VisionParam)
 }
 
 function Set_HSV() {
@@ -260,7 +278,7 @@ function Set_HSV() {
                 }
                 if (Topic_HSV_Flag)
                     //console.log('Topic RedHSV = ' + RedBox);
-                Pub_Color(mode, RedBox);
+                    Pub_Color(mode, RedBox);
             }
             if (camera2) {
                 for (var i = 0; i < 6; i++) {
@@ -268,7 +286,7 @@ function Set_HSV() {
                 }
                 if (Topic_HSV_Flag)
                     //console.log('Topic RedHSV = ' + RedGoalBox);
-                Pub_Color(5, RedGoalBox);
+                    Pub_Color(5, RedGoalBox);
             }
             break;
         case 1:
@@ -279,7 +297,7 @@ function Set_HSV() {
                 }
                 if (Topic_HSV_Flag)
                     //console.log('Topic BlueHSV = ' + BlueBox);
-                Pub_Color(mode, BlueBox);
+                    Pub_Color(mode, BlueBox);
             }
             if (camera2) {
                 for (var i = 0; i < 6; i++) {
@@ -287,7 +305,7 @@ function Set_HSV() {
                 }
                 if (Topic_HSV_Flag)
                     //console.log('Topic BlueHSV = ' + BlueGoalBox);
-                Pub_Color(6, BlueGoalBox);
+                    Pub_Color(6, BlueGoalBox);
             }
             break;
         case 2:
@@ -298,7 +316,7 @@ function Set_HSV() {
                 }
                 if (Topic_HSV_Flag)
                     //console.log('Topic YellowHSV = ' + YellowBox);
-                Pub_Color(mode, YellowBox);
+                    Pub_Color(mode, YellowBox);
             }
             if (camera2) {
                 for (var i = 0; i < 6; i++) {
@@ -306,7 +324,7 @@ function Set_HSV() {
                 }
                 if (Topic_HSV_Flag)
                     //console.log('Topic YellowHSV = ' + YellowGoalBox);
-                Pub_Color(7, YellowGoalBox);
+                    Pub_Color(7, YellowGoalBox);
             }
             break;
         case 3:
@@ -316,7 +334,7 @@ function Set_HSV() {
             }
             if (Topic_HSV_Flag)
                 //console.log('Topic WhiteHSV = ' + WhiteBox);
-            Pub_Color(mode, WhiteBox);
+                Pub_Color(mode, WhiteBox);
             break;
         case 4:
             document.getElementById('Black_disable').checked = false;
@@ -325,7 +343,7 @@ function Set_HSV() {
             }
             if (Topic_HSV_Flag)
                 //console.log('Topic BlackHSV = ' + BlackBox);
-            Pub_Color(mode, BlackBox);
+                Pub_Color(mode, BlackBox);
             break;
     }
 
@@ -342,9 +360,9 @@ function Pub_Color(mode, box) {
         BlackHSVBox: BlackBox,
     });
 */
-    for (var i = 0; i < 6; i++) {
-       console.log(box[i]);
-    }
+    // for (var i = 0; i < 6; i++) {//show HSV
+    //    console.log(box[i]);
+    // }
     let Color = new ROSLIB.Message({
         mode: mode,
         data: box
@@ -528,7 +546,7 @@ var TopicStart = new ROSLIB.Topic({
 var car_painting = 0;
 function strategy_start(num) {
     num = parseInt(num);
-    car_painting= num;
+    car_painting = num;
 
     // if (num == 0){
     //     //stop
@@ -618,18 +636,18 @@ odomcall.subscribe(function (msg) {
     angle_ = angle_ / 180 * Math.PI;
     ctx.clearRect(0, 0, map.width, map.height); //clear canvas
     painting(x_, y_, angle_, true);
-    if (car_painting==0) {
+    if (car_painting == 0) {
         car_clear = false;
         ctx.clearRect(0, 0, map.width, map.height); //clear canvas
         All_paint();
         painting(x_, y_, angle_, true);
-    } else if( car_painting==1){
+    } else if (car_painting == 1) {
         if (!car_clear) {
             car_clear = true;
             ctx.clearRect(0, 0, map.width, map.height); //clear canvas
         }
         All_paint();
-    }else if(car_painting ==-1){
+    } else if (car_painting == -1) {
         if (!car_clear) {
             car_clear = true;
             ctx.clearRect(0, 0, map.width, map.height); //clear canvas

@@ -75,18 +75,42 @@ function robot_Norm(data) { //convert data to robot specifications
 }
 function Map_control() { //map send button's action when pressed
     if (view.src.slice(-14) == "img/ground.png") {
+
         coordinate = [];
+
         for (i = 0; i < buffer.length; i++) {
             data = robot_Norm(buffer[i]);
             coordinate.push(data);
-            console.log(data);
         }
-        console.log(coordinate);
+        // console.log(coordinate);
+
+        coordToX = [];
+        coordToY = [];
+        coordToZ = [];
+
+        for(i=0;i<buffer.length;i++){
+            coordToX.push(coordinate[i][0]);
+            coordToY.push(coordinate[i][1]);
+            coordToZ.push(coordinate[i][2]);
+        }
+        console.log(" ");
+        console.log("X");
+        console.log(coordToX);
+        console.log("Y");
+        console.log(coordToY);
+        console.log("Z")
+        console.log(coordToZ);
+        console.log(" ");
+
+        PublishTopicmap(coordToX,coordToY,coordToZ);
+
     }
     else {
         console.log("Don't touch me");
     }
 }
+
+
 map.addEventListener("mousedown", function (e) {
     if (view.src.slice(-14) == "img/ground.png") {
         if (e.button == 0) {

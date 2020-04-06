@@ -38,7 +38,7 @@ CATCH_BALL = 3
 GOAL = 4
 FIND_BALL2 = 5
 
-# FLAG  
+# FLAG
 SIMULATEION_FLAG = False
 
 
@@ -112,7 +112,7 @@ class NodeHandle(object):
 	def Set_Odom(self,msg):
 		self._pos = [msg.pose.pose.position.x,msg.pose.pose.position.y]
 		(r,p,y) = tf.transformations.euler_from_quaternion([msg.pose.pose.orientation.x,msg.pose.pose.orientation.y,msg.pose.pose.orientation.z,msg.pose.pose.orientation.w])
-        
+
 		self._front = Rad2Deg(y)
 	def Set_Start(self,msg):
 		self._start = msg.data
@@ -132,7 +132,7 @@ class NodeHandle(object):
 		print(self.color_to_strings(self._double))
 	def Set_Ball2s(self,msg):
 		self._ballsColor2 = msg.color2
-		self._ballsCatch = msg.extbot2	
+		self._ballsCatch = msg.extbot2
 	def Set_Param(self, msg):
 		self.catchBallDis_param = rospy.get_param("tb3/center")
 		self.catchBallDis = self.catchBallDis_param[2]
@@ -152,7 +152,7 @@ class Strategy(NodeHandle):
 		self.prev_RPdis = 999
 
 		self.state = 0
-		
+
 		# self.vel_x = 0.8
 		self.vel_x = 0.3
 		self.vel_z = 0.2
@@ -229,7 +229,7 @@ class Strategy(NodeHandle):
 	def Catch_Ball(self,control):
 		time.sleep(0.5)
 		self.pub_arm.publish(control)
-		
+
 	def Robot_Stop(self):
 		twist = Twist()
 		twist.linear.x = 0
@@ -241,7 +241,7 @@ class Strategy(NodeHandle):
     	# robot to pose angle
 	def Get_RP_Angle(self,pos):
 		return Rad2Deg(math.atan2((pos[1]-self._pos[1]),(pos[0]-self._pos[0])))
-	
+
 	# robot to pose distance
 	def Get_RP_Dis(self,pos):
 		return math.sqrt(pow(pos[0]-self._pos[0],2.0)+pow(pos[1]-self._pos[1],2.0))
@@ -745,7 +745,7 @@ class Strategy(NodeHandle):
 		#=======================go to front of goal area===================
 		if(self.state == 0):
 			RPang = Norm_Angle(self.Get_RP_Angle(front_goal)-self._front)
-			RBang = 0.0			
+			RBang = 0.0
 			if(abs(RPang) > 1):
 				if(RPang > 0):
 						x = 0
@@ -791,7 +791,7 @@ class Strategy(NodeHandle):
 				z = 0
 				self.Robot_Vel([x,z])
 				self.state = 2
-		
+
 
 
 		#=======================go to goal area===================
