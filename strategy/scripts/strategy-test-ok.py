@@ -908,6 +908,7 @@ class Strategy(NodeHandle):
 			self.Robot_Stop()
 			self.state = 0
 			self.behavior = INIT
+
 	def test(self, sleep_time = 3):
 		self.Robot_Stop()
 		self.counter +=1
@@ -918,6 +919,7 @@ class Strategy(NodeHandle):
 		if(self.counter == (sleep_time // 0.0333)):
 			self.counter = 0
 			self.behavior = WEB_GO
+
 	def web_go_Strategy(self):
 		if((len(self.web_axis) != 0 or len(self.web_ang) != 0) or self.state == 2):
 			if(self.state == 0 or self.state == 2):
@@ -964,6 +966,7 @@ class Strategy(NodeHandle):
 			self.web_set_up = False
 			self.Robot_Stop()
 			self.behavior = FIND_BALL
+
 	def Find_Ball_Strategy3(self, angle = 45):
 		if(self.state == 0):
 			if(self.lostball == False):
@@ -1007,6 +1010,7 @@ class Strategy(NodeHandle):
 				self.lostball = False
 				self.behavior = CATCH_BALL
 				self.state = 0
+
 	def	Short_Shoot_Strategy2(self):
 		front_goal = copy.deepcopy(self.goal)
 		front_goal[0] = 2.5
@@ -1111,6 +1115,7 @@ class Strategy(NodeHandle):
 			print("shoot_axis",self.web_axis)
 			self.goal = self.findballpos if(len(self.web_axis) == 0) else self.web_axis.pop(0)
 			print("shoot",self.goal)
+
 	def Catch_Ball_Strategy2(self):
 		self.lostball = False
 		if(self.state == 0):
@@ -1195,6 +1200,7 @@ class Strategy(NodeHandle):
 				self.ballang = 999
 				self.ballarea = 0
 				self.Robot_Stop()
+
 	def	Goal_Strategy2(self):
 		front_goal = copy.deepcopy(self.goal)
 		front_goal[0] = 2.5

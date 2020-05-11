@@ -6,6 +6,8 @@ from vision.msg import aim, aim2
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
+from std_msgs.msg import Float64MultiArray
+from strategy.msg import mapcoord
 from std_msgs.msg import Int32MultiArray
 from std_msgs.msg import Bool
 from std_msgs.msg import Empty as msg_Empty
@@ -48,7 +50,7 @@ def Rad2Deg(angle):  # radius to degree
     return angle * 180 / math.pi
 
 
-def Norm_Angle(angle):  # 360° to +-180°
+def Norm_Angle(angle):  # 360° to +-180°Int32MultiArray
     if(angle > 180):
         angle -= 360
     elif(angle < -180):
@@ -77,9 +79,9 @@ class NodeHandle(object):
         self.find_goal_count = 0
 
         # test web coordinates set up
-        self.web_axis = None
+        self.web_axis = []
         self.web_set_up = False
-        self.web_ang = None
+        self.web_ang = []
 
         self.Timer_10 = TimeCounter(time=10.0)
         if(SIMULATEION_FLAG):
@@ -121,12 +123,16 @@ class NodeHandle(object):
         # Service
         rospy.Service('tb3/strategy/save', Empty, self.Call_Get_Param)
 
+        # rospy.Topic('tb3/strategy/mapinfo', self.Set_coordinate)
         # rospy.Service('tb3/strategy/coordinate', bool, self.Set_coordinates)
+
+        self.sub_map = rospy.Subscriber(
+            "tb3/strategy/mapinfo", mapcoord , self.Set_coordinates)
 
         if rospy.has_param("tb3/center"):
             self.catchBallDis_param = rospy.get_param("tb3/center")
             self.catchBallDis = self.catchBallDis_param[2]
-        print("ready")
+        print("NodeHandle done")
 
     def Strategy_Params(self):
         self.strategy = 1
@@ -231,12 +237,13 @@ class NodeHandle(object):
 
     def Delay(self, time_counter):
         print("")
-    # def Set_coordinates(self,msg):
-    # 	self.web_set_up = msg.set_up
-    # 	self.web_axis = list(zip(msg.x_axis, msg.y_axis))
-    # 	self.web_ang = msg.z_axis
-    # 	return True
 
+    def Set_coordinates(self,msg):
+    	self.web_set_up = True
+    	self.web_axis = list(zip(msg.x.data, msg.y.data))
+    	self.web_ang = list(msg.z.data)
+
+        print("web set up")
 
 class Strategy(NodeHandle):
     def __init__(self):
@@ -244,6 +251,10 @@ class Strategy(NodeHandle):
         self.Get_Strategy_Params()
         self.state = 0
         self.behavior = INIT
+
+        self.pre_state = 0          #for print once
+        self.pre_behavior = INIT    #for print once
+
         self.initpos = None
         self.findballpos = [1.9, 0.05]
         self.goal = None
@@ -261,13 +272,13 @@ class Strategy(NodeHandle):
         self.ballarea = 0
         self.lostball = False
 
-        self.web_set_up = True
-        self.web_axis = [[1, 0.5], [1, -1]]  # up = x left = y
-        self.web_ang = [90, 180]  # right = +
-
-        # self.web_axis = []#up = x left = y
-        # self.web_ang = []
         self.counter = 0
+
+
+        self.prev_goal = None       #for print once
+
+
+        print("Strategy init done")
 
     def behavior_to_strings(self, argument):
         switcher = {
@@ -399,7 +410,7 @@ class Strategy(NodeHandle):
 
     # strategy
     def Init_Strategy(self):
-        print("Init_Strategy")
+        # print("Init_Strategy")
         self.state = 0
         self.behavior = BEGINER
         self.initpos = [[0.1, 0.0]]
@@ -418,19 +429,16 @@ class Strategy(NodeHandle):
         self.ballang = 999
         self.ballarea = 0
 
-        self.web_set_up = True
-        self.web_axis = [[1, 0.5], [1, -1]]  # up = x left = y
-        self.web_ang = [90, 180]  # right = +
-
-        # self.web_axis = []#up = x left = y
-        # self.web_ang = []
-
         self.Catch_Ball(0)  # open
 
     def Beginer_Strategy(self):
         if(self.web_set_up):
-            self.behavior = WEB_GO
-            self.goal = self.web_axis.pop(0)
+            if(self.web_ang != [] and self.web_axis != []):
+                self.behavior = WEB_GO
+                self.goal = self.web_axis.pop(0)
+            else:
+                self.web_set_up = False
+                self.behavior = FIND_BALL
         else:
             if(self.state == 0):
                 RPang = Norm_Angle(self.Get_RP_Angle(self.goal) - self._front)
@@ -464,7 +472,7 @@ class Strategy(NodeHandle):
                     self.prev_RPdis = RPdis
                 else:
                     if(len(self.initpos) == 0):
-                        self.behavior = FIND_BALL2
+                        self.behavior = FIND_BALL
                     else:
                         self.goal = self.initpos.pop(0)
                         self.prev_RPdis = 999
@@ -488,7 +496,10 @@ class Strategy(NodeHandle):
                     self.behavior = FIND_BALL if(
                         self.state == 2) else self.behavior
             elif(self.state == 1):
-                print(self.goal)
+                if(self.prev_goal != self.goal):
+                    print(self.goal)
+                    self.prev_goal = self.goal
+
                 RPdis = self.Get_RP_Dis(self.goal)
                 RPang = Norm_Angle(self.Get_RP_Angle(self.goal) - self._front)
                 if(RPdis > self.error_dis):
@@ -511,8 +522,7 @@ class Strategy(NodeHandle):
                     self.Robot_Vel([x, z])
                     self.prev_RPdis = RPdis
                 else:
-                    self.goalang = self.web_ang.pop(0) if(
-                        len(self.web_ang) != 0) else self.goalang
+                    self.goalang = self.goalang if(self.web_ang == []) else self.web_ang.pop(0)
                     self.prev_RPdis = 999
                     self.state = 2
                     self.Robot_Stop()
@@ -653,6 +663,7 @@ class Strategy(NodeHandle):
                     RPang > 0) else -self.find_ball_vel_z
                 self.Robot_Vel([0, z])
                 if(self.lostball == True):
+                    print("lost ball")
                     if(self._ballsColor == self.ballcolor and self._ballsDis < 250):
                         self.ballcolor = self._ballsColor
                         self.balldis = self._ballsDis
@@ -667,6 +678,7 @@ class Strategy(NodeHandle):
                         self.ballcolor = self._ballsColor
                         self.balldis = self._ballsDis
                         self.ballang = self._front
+                        print("?")
                     if(self._ballsColor == self._double and self._ballsDis < 280 and self.balldis > 200):
                         self.ballcolor = self._ballsColor
                         self.balldis = self._ballsDis
@@ -1044,7 +1056,7 @@ class Strategy(NodeHandle):
                 FIND_BALL: self.Find_Ball_Strategy,
                 CATCH_BALL: self.Catch_Ball_Strategy,
                 GOAL: self.Goal_Strategy,
-                FIND_BALL2: self.Find_Ball_Strategy,
+                FIND_BALL2: self.Find_Ball_Strategy2,
                 SHORT_SHOOT: self.Short_Shoot_Strategy,
                 FAR_SHOOT: self.Far_Shoot_Strategy
             }
@@ -1060,13 +1072,17 @@ class Strategy(NodeHandle):
         self._color = self.color_to_strings(self.ballcolor)
         self._double_point = self.color_to_strings(self._double)
         if self._start == 1:
-            print(self._behavior, self.state)
+            if(self.pre_behavior != self._behavior or self.pre_state != self.state):
+                print("{:11s}{}".format(self._behavior, self.state))
+                self.pre_behavior = self._behavior
+                self.pre_state = self.state
+
             self.Robot_Moving()
             switcher = {
-                INIT: self.Beginer_Strategy,
+                INIT: self.Init_Strategy,
                 BEGINER: self.Beginer_Strategy,
                 WEB_GO: self.web_go_Strategy,
-                FIND_BALL: self.Find_Ball_Strategy3,
+                FIND_BALL: self.Find_Ball_Strategy2,
                 CATCH_BALL: self.Catch_Ball_Strategy,
                 GOAL: self.Goal_Strategy,
                 SHORT_SHOOT: self.Short_Shoot_Strategy

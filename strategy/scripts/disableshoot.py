@@ -55,6 +55,7 @@ def Norm_Angle(angle):
 def zerolistmaker(n):
     listofzeros = [0] * n
     return listofzeros
+
 class NodeHandle(object):
 	def __init__(self):
 		self._scan = None
@@ -75,7 +76,7 @@ class NodeHandle(object):
 
 		if(SIMULATEION_FLAG):
 			self.pub_vel = rospy.Publisher('robot1/cmd_vel',Twist, queue_size = 1)
-		
+
 			self.sub_scaninfo = rospy.Subscriber("robot1/scan",LaserScan,self.Set_ScanInfo)
 			self.sub_odom = rospy.Subscriber("robot1/odom",Odometry,self.Set_Odom)
 		else:
@@ -199,7 +200,7 @@ class Strategy(NodeHandle):
 			print(self._double_point,self._behavior,self.state,self._color,self.balldis,self.ballang)
 			self.Robot_Moving()
 			if(self.behavior == INIT):
-				
+
 				self.Init_Strategy()
 				#print(self.goal)
 			elif(self.behavior == BEGINER):
@@ -213,12 +214,12 @@ class Strategy(NodeHandle):
 			elif(self.behavior == FIND_BALL2):
 				self.Find_Ball_Strategy2()
 			else:
-				self.Robot_Stop()		
+				self.Robot_Stop()
 		else:
 			#self.Avoidance_Strategy()
 			self.Robot_Stop()
 			self.behavior = INIT
-			self.state = 0	
+			self.state = 0
 
 	def Robot_Vel(self,vel):
 		twist = Twist()
@@ -226,6 +227,7 @@ class Strategy(NodeHandle):
 		twist.angular.z = vel[1]
 
 		self.pub_vel.publish(twist)
+
 	def Catch_Ball(self,control):
 		time.sleep(0.5)
 		self.pub_arm.publish(control)
@@ -234,17 +236,20 @@ class Strategy(NodeHandle):
 		twist = Twist()
 		twist.linear.x = 0
 		twist.angular.z = 0
-        
-		self.pub_vel.publish(twist)   
+
+		self.pub_vel.publish(twist)
+
 	def Robot_Moving(self):
 		self.pub_moving.publish(True)
     	# robot to pose angle
+
 	def Get_RP_Angle(self,pos):
 		return Rad2Deg(math.atan2((pos[1]-self._pos[1]),(pos[0]-self._pos[0])))
 
 	# robot to pose distance
 	def Get_RP_Dis(self,pos):
 		return math.sqrt(pow(pos[0]-self._pos[0],2.0)+pow(pos[1]-self._pos[1],2.0))
+
 #===============================================
 	def x_speed_planning(self,distance):
 		max_distance = 1.5
@@ -274,7 +279,7 @@ class Strategy(NodeHandle):
 			planning_speed = min_speed
 		#A-Amin/Amax-Amin=B-Bmin/Bmax-Bmin
 		#print("z: ",angle, planning_speed)
-		return planning_speed	
+		return planning_speed
 #===============================================
 	def Avoidance_Strategy(self):
 		obstacle = 0
@@ -283,7 +288,7 @@ class Strategy(NodeHandle):
 		avoidance_angle = 60
 		avoidance_vel = 0.5
 		have_obstale = False
-		
+
 		for i in range(len(self._scan)-10):
 			if(i>len(self._scan)):
 				break
@@ -330,7 +335,7 @@ class Strategy(NodeHandle):
 		self.prev_RPdis = 999
 
 		self.state = 0
-		
+
 		# self.vel_x = 0.8
 		self.vel_x = 0.4
 		self.vel_z = 0.3
@@ -347,16 +352,16 @@ class Strategy(NodeHandle):
 		self.balldis = 999
 		self.ballang = 999
 		self.ballarea = 0
-	
+
 		self.Catch_Ball(0)
 		self.goal = self.initpos.pop(0)
 		self.behavior = BEGINER
 #========================================
 	def Beginer_Strategy(self):
-		
+
 		if(self.state == 0):
 			RPang = Norm_Angle(self.Get_RP_Angle(self.goal)-self._front)
-						
+
 			if(abs(RPang) > 2):
 				if(RPang > 0):
 			 		x = 0
@@ -371,7 +376,7 @@ class Strategy(NodeHandle):
 		elif(self.state == 1):
 			RPdis = self.Get_RP_Dis(self.goal)
 			RPang = Norm_Angle(self.Get_RP_Angle(self.goal)-self._front)
-			
+
 			if(RPdis > self.error_dis):
 				if(self.prev_RPdis >= RPdis):
 					if(abs(RPang) > self.error_ang):
@@ -383,7 +388,7 @@ class Strategy(NodeHandle):
 							z = -self.z_speed_planning(RPang)
 					else:
 						x = self.x_speed_planning(RPdis)
-						z = 0				
+						z = 0
 				else:
 					x = 0
 					z = 0
@@ -404,7 +409,7 @@ class Strategy(NodeHandle):
 					self.goal = self.initpos.pop(0)
 					self.prev_RPdis = 999
 				self.state = 0
-				self.Robot_Stop()			
+				self.Robot_Stop()
 		else:
 			self.Robot_Stop()
 
@@ -512,6 +517,7 @@ class Strategy(NodeHandle):
 				self.lostball = False
 				self.behavior = CATCH_BALL
 				self.state = 0
+
 	def Find_Ball_Strategy2(self):
 		if(self.state == 0):
 			#self.balldis = 999
@@ -547,7 +553,7 @@ class Strategy(NodeHandle):
 					x = 0
 					z = -self.find_ball_vel_z
 				self.Robot_Vel([x,z])
-				
+
 				if(self.lostball==True):
 					if(self._ballsColor==self.ballcolor and self._ballsDis<250):
 						self.ballcolor = self._ballsColor
@@ -618,6 +624,7 @@ class Strategy(NodeHandle):
 				self.behavior = CATCH_BALL
 				self.state = 0
 				self.lostball = False
+
 	def Catch_Ball_Strategy(self):
 		self.lostball = False
 		if(self.state == 0):
@@ -693,7 +700,7 @@ class Strategy(NodeHandle):
 									z = self.vel_z
 								else:
 									x = self.vel_x
-									z = -self.vel_z 
+									z = -self.vel_z
 							else:
 								x = self.vel_x
 								z = 0
@@ -704,10 +711,10 @@ class Strategy(NodeHandle):
 									z = self.vel_z
 								else:
 									x = self.vel_x-self.vel_z
-									z = -self.vel_z 
+									z = -self.vel_z
 							else:
 								x = self.vel_x-self.vel_z
-								z = 0				
+								z = 0
 					else:
 						x = 0
 						z = 0
@@ -739,6 +746,7 @@ class Strategy(NodeHandle):
 				self.ballarea = 0
 				#self.ballcolor = None
 				self.Robot_Stop()
+
 	def	Goal_Strategy(self):
 		front_goal = copy.deepcopy(self.goal)
 		front_goal[0] = 2.5
@@ -771,7 +779,7 @@ class Strategy(NodeHandle):
 							z = -self.z_speed_planning(RPang)
 					else:
 						x = self.x_speed_planning(RPdis)
-						z = 0				
+						z = 0
 				else:
 					x = 0
 					z = 0
@@ -797,14 +805,14 @@ class Strategy(NodeHandle):
 		#=======================go to goal area===================
 		elif(self.state == 2):
 			RPang = Norm_Angle(self.Get_RP_Angle(self.goal)-self._front)
-			#RBang = 0.0	
+			#RBang = 0.0
 			temp_speed = 0
 			if(abs(RPang)>10):
 				temp_speed = 0.4
 			else:
 				temp_speed = 0.1
 			if(abs(RPang) > 0.5):
-			
+
 				if(RPang > 0):
 						x = 0
 						z = temp_speed
@@ -818,7 +826,7 @@ class Strategy(NodeHandle):
 				z=0
 				time.sleep(1);
 				self.state = 3
-'''
+		'''
 		#================shoot strategy===========================
 		elif(self.state == 3):
 				self.pub_shoot.publish();
@@ -837,7 +845,7 @@ class Strategy(NodeHandle):
 				self.ballang = 999
 				self.ballarea = 0
 				self.goal = self.findballpos
-'''
+		'''
 		elif(self.state == 3):
 			RPdis = self.Get_RP_Dis(self.goal)
 			RPang = Norm_Angle(self.Get_RP_Angle(self.goal)-self._front)
@@ -849,10 +857,10 @@ class Strategy(NodeHandle):
 							z = self.z_speed_planning(RPang)
 						else:
 							x = self.x_speed_planning(RPdis)
-							z = -self.z_speed_planning(RPang) 
+							z = -self.z_speed_planning(RPang)
 					else:
 						x = self.x_speed_planning(RPdis)
-						z = 0				
+						z = 0
 				else:
 					x = 0
 					z = 0
@@ -872,7 +880,7 @@ class Strategy(NodeHandle):
 				self.state = 4
 		#========================back=================================
 		elif(self.state == 4):
-			
+
 			RPdis = self.Get_RP_Dis([2.7,self.goal[1]])
 			RPang = Norm_Angle(180-(self.Get_RP_Angle([2.7,self.goal[1]])-self._front))
 			print('rpang',RPang)
@@ -898,10 +906,10 @@ class Strategy(NodeHandle):
 							z = -self.vel_z
 						else:
 							x = -(self.vel_x-self.vel_z)
-							z = self.vel_z 
+							z = self.vel_z
 					else:
 						x = -(self.vel_x-self.vel_z)
-						z = 0				
+						z = 0
 				else:
 					x = 0
 					z = 0
@@ -924,7 +932,7 @@ class Strategy(NodeHandle):
 			self.Robot_Stop()
 			#print("state ", self.state)
 			#self.state = 0
-			#self.behavior = FIND_BALL			
+			#self.behavior = FIND_BALL
 
 def main():
 	rospy.init_node('strategy', anonymous=True)
@@ -941,7 +949,7 @@ def main():
             #print("90 : " + str(strategy._scan[90]))
             #print("180 : " + str(strategy._scan[180]))
             #print("270 : " + str(strategy._scan[270]))
-		if(strategy._pos):        
+		if(strategy._pos):
 			strategy.Process()
 		rate.sleep()
 	try:
