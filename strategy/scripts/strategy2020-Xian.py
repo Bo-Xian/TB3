@@ -595,18 +595,24 @@ class Strategy(NodeHandle):
                 self.ballcolor = None
                 self.balldis = 999
                 self.ballang = 999
-            RPang = self.findang - self._front if(self._front >= 0) else - self.findang - self._front
-            RPang = Norm_Angle(RPang)
+            # RPang = self.findang - self._front if(self._front >= 0) else - self.findang - self._front
+            # RPang = Norm_Angle(RPang)
+            # print(RPang,self._front)
+            # if(abs(RPang) > self.error_ang):
+            #     z = self.find_ball_vel_z if(
+            #         RPang > 0) else -self.find_ball_vel_z
+            #     self.Robot_Vel([0, z])
+
+            RPang = Norm_Angle(self.findang-self.Get_RP_Angle([1.5,0]) - self._front)
+            print(RPang)
             if(abs(RPang) > self.error_ang):
-                z = self.find_ball_vel_z if(
-                    RPang > 0) else -self.find_ball_vel_z
+                z = self.z_max_speed
                 self.Robot_Vel([0, z])
             else:
                 self.Robot_Stop()
                 self.state = 1 if(self._front >= 0) else 2
         elif(self.state == 1 or self.state == 2):
-            RPang = -self.findang - self._front \
-                if(self.state == 1) else self.findang - self._front
+            RPang = -self.findang-self.Get_RP_Angle([1.5,0]) - self._front
             RPang = Norm_Angle(RPang)
             if(abs(RPang) > self.error_ang):
                 z = self.find_ball_vel_z if(
@@ -1037,8 +1043,17 @@ class Strategy(NodeHandle):
             self.Robot_Stop()
             time.sleep(0.2)
             self.pub_shoot.publish()
-            self.state = 7
-        elif(self.state == 7):
+            self.state = 8
+        elif(self.state == 7):#00000
+            RPang = Norm_Angle(self.Get_RP_Angle([1.5,0]) - self._front)
+            print(RPang)
+            if(abs(RPang) > self.error_ang):
+                z = self.z_max_speed
+                self.Robot_Vel([0, z])
+            else:
+                self.Robot_Stop()
+                self.state = 8
+        elif(self.state == 8):
             self.Robot_Stop()
             print("finish")
             self.lostball = False
@@ -1047,16 +1062,6 @@ class Strategy(NodeHandle):
             # print("behavior", self.behavior, "web_set_up", self.web_set_up)
             self.behavior = WEB_GO if(self.web_set_up) else FIND_BALL
             # print("behavior", self.behavior)
-# 000000000000
-            # RPang = Norm_Angle(self.Get_RP_Angle(front_goal) - self._front)
-            # if(abs(RPang) > self.error_ang):
-            #     z = self.find_ball_vel_z if(
-            #         RPang > 0) else -self.find_ball_vel_z
-            #     self.Robot_Vel([0, z])
-            # else:
-            #     self.Robot_Stop()
-            #     self.state = 1
-# 00000000000000000000
             print(front_goal)
             self.ballcolor = None
             self.balldis = 999
