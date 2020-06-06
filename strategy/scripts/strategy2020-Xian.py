@@ -274,7 +274,8 @@ class Strategy(NodeHandle):
 
         self.counter = 0
 
-        self.test = 0               #for test
+        self.angleFor_findBall = 0
+        self.getAngle_once = False
         self.prev_goal = None       #for print once
 
 
@@ -590,7 +591,9 @@ class Strategy(NodeHandle):
                 self.state = 0
 
     def Find_Ball_Strategy2(self):
+        # print(1)
         if(self.state == 0):
+            # print(0)
             if(self.lostball == False):
                 self.ballcolor = None
                 self.balldis = 999
@@ -603,17 +606,26 @@ class Strategy(NodeHandle):
             #         RPang > 0) else -self.find_ball_vel_z
             #     self.Robot_Vel([0, z])
 
-            RPang = Norm_Angle(self.findang-self.Get_RP_Angle([1.5,0]) - self._front)
-            print(RPang)
+
+            if(self.getAngle_once==False):
+                self.angleFor_findBall = self._front
+                self.getAngle_once = True
+            RPang = Norm_Angle((self.angleFor_findBall+self.findang) - self._front)
+
+            print("f+f  {}  F  {}  G {}".format(self.angleFor_findBall+self.findang,self._front,RPang))
+
             if(abs(RPang) > self.error_ang):
                 z = self.z_max_speed
                 self.Robot_Vel([0, z])
             else:
                 self.Robot_Stop()
+                self.getAngle_once = False
                 self.state = 1 if(self._front >= 0) else 2
         elif(self.state == 1 or self.state == 2):
-            RPang = -self.findang-self.Get_RP_Angle([1.5,0]) - self._front
-            RPang = Norm_Angle(RPang)
+            RPang = Norm_Angle((self.angleFor_findBall-self.findang) - self._front)
+
+            print("f-f  {}  F  {}  G {}".format(self.angleFor_findBall-self.findang,self._front,RPang))
+
             if(abs(RPang) > self.error_ang):
                 z = self.find_ball_vel_z if(
                     RPang > 0) else -self.find_ball_vel_z
@@ -1043,10 +1055,10 @@ class Strategy(NodeHandle):
             self.Robot_Stop()
             time.sleep(0.2)
             self.pub_shoot.publish()
-            self.state = 8
-        elif(self.state == 7):#00000
+            self.state = 7
+        elif(self.state == 7):#turn 180 to face the center of fild
             RPang = Norm_Angle(self.Get_RP_Angle([1.5,0]) - self._front)
-            print(RPang)
+            # print(RPang)
             if(abs(RPang) > self.error_ang):
                 z = self.z_max_speed
                 self.Robot_Vel([0, z])

@@ -483,7 +483,14 @@ Object Vision::SearchObject(Mat mask, vector<int> setting)
 //==========================
         center = Point((max_x + min_x) / 2, (max_y + min_y) / 2);
         offset = center.x - center_x;
-        dis_point = Point(center.x, min_y + (radius * 2));
+        //dis_point = Point(center.x, min_y + (radius * 2));
+        if(max_y>img.rows*0.6)//goal color filter
+        {
+            dis_point = Point(center.x, min_y + (radius * 2));
+        }else
+        {
+            dis_point = Point(center.x, max_y);
+        }
         //dis_point = Point(center.x, min_y);
         //distance = img.rows-dis_point.y;
         distance = sqrt(pow((dis_point.x - center_x), 2) + pow((dis_point.y - center_y), 2));
@@ -492,6 +499,7 @@ Object Vision::SearchObject(Mat mask, vector<int> setting)
 
         //過慮長條角錐
         //if( (down_y-up_y)*0.8 > (down_x-up_x) )continue;
+        // if( (max_y - min_y) > (max_x - min_x)*0.2 )continue;
         if (ball.distance > distance && size > obj_size)
         {
             ball.upleft = Point(min_x, min_y);
