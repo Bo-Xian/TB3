@@ -77,9 +77,9 @@ class NodeHandle(object):
         self.find_goal_count = 0
 
         # test web coordinates set up
-        self.web_axis = None
-        self.web_set_up = False
-        self.web_ang = None
+        self.web_set_up = True
+        self.web_axis = [[2.5,2,1.5,1,0.5], [-1.5,-1,0,1,1.5]]  # up = x left = y
+        self.web_ang = [-170,-95,0,90,170]  # right = +
 
         self.Timer_10 = TimeCounter(time=10.0)
         if(SIMULATEION_FLAG):
@@ -126,7 +126,7 @@ class NodeHandle(object):
         if rospy.has_param("tb3/center"):
             self.catchBallDis_param = rospy.get_param("tb3/center")
             self.catchBallDis = self.catchBallDis_param[2]
-        print("ready")
+        print("NodeHandle init done")
 
     def Strategy_Params(self):
         self.strategy = 1
@@ -231,6 +231,7 @@ class NodeHandle(object):
 
     def Delay(self, time_counter):
         print("")
+
     # def Set_coordinates(self,msg):
     # 	self.web_set_up = msg.set_up
     # 	self.web_axis = list(zip(msg.x_axis, msg.y_axis))
@@ -244,6 +245,8 @@ class Strategy(NodeHandle):
         self.Get_Strategy_Params()
         self.state = 0
         self.behavior = INIT
+        self.prev_state = None
+        self.prev_behavior = None
         self.initpos = None
         self.findballpos = [1.9, 0.05]
         self.goal = None
@@ -261,13 +264,14 @@ class Strategy(NodeHandle):
         self.ballarea = 0
         self.lostball = False
 
-        self.web_set_up = True
-        self.web_axis = [[1, 0.5], [1, -1]]  # up = x left = y
-        self.web_ang = [90, 180]  # right = +
+        # self.web_set_up = True
+        # self.web_axis = [[2.5,2,1.5,1,0.5], [-1.5,-1,0,1,1.5]]  # up = x left = y
+        # self.web_ang = [-170,-95,0,90,170]  # right = +
 
         # self.web_axis = []#up = x left = y
         # self.web_ang = []
         self.counter = 0
+        print("Strategy init done")
 
     def behavior_to_strings(self, argument):
         switcher = {
@@ -313,8 +317,7 @@ class Strategy(NodeHandle):
         self.pub_moving.publish(True)
 
     def Get_RP_Angle(self, pos):  # robot to pose angle
-        ang = Rad2Deg(math.atan2(
-            (pos[1] - self._pos[1]), (pos[0] - self._pos[0])))
+        ang = Rad2Deg(math.atan2((pos[1] - self._pos[1]), (pos[0] - self._pos[0])))
         return ang
 
     def Get_RP_Dis(self, pos):  # robot to pose distance
@@ -397,9 +400,9 @@ class Strategy(NodeHandle):
                 obstacle = obstacle * 3.5
         return obstacle, have_obstale
 
+
     # strategy
     def Init_Strategy(self):
-        print("Init_Strategy")
         self.state = 0
         self.behavior = BEGINER
         self.initpos = [[0.1, 0.0]]
@@ -429,7 +432,7 @@ class Strategy(NodeHandle):
 
     def Beginer_Strategy(self):
         if(self.web_set_up):
-            self.behavior = WEB_GO
+            self.behavior = FIND_BALL#WEB_GO
             self.goal = self.web_axis.pop(0)
         else:
             if(self.state == 0):
@@ -485,8 +488,7 @@ class Strategy(NodeHandle):
                 else:
                     self.Robot_Stop()
                     self.state = 1 if(self.state == 0) else 2
-                    self.behavior = FIND_BALL if(
-                        self.state == 2) else self.behavior
+                    self.behavior = FIND_BALL if(self.state == 2) else self.behavior
             elif(self.state == 1):
                 print(self.goal)
                 RPdis = self.Get_RP_Dis(self.goal)
@@ -1029,6 +1031,8 @@ class Strategy(NodeHandle):
                 len(self.web_axis) == 0) else self.web_axis.pop(0)
             print("shoot", self.goal)
 
+
+    # process
     def Process(self):
         self._behavior = self.behavior_to_strings(self.behavior)
         self._color = self.color_to_strings(self.ballcolor)
@@ -1059,11 +1063,15 @@ class Strategy(NodeHandle):
         self._behavior = self.behavior_to_strings(self.behavior)
         self._color = self.color_to_strings(self.ballcolor)
         self._double_point = self.color_to_strings(self._double)
+
         if self._start == 1:
-            print(self._behavior, self.state)
+            if (self.prev_behavior != self.behavior or self.prev_state != self.state):
+                print("{:<10s} state = {}".format(self._behavior, self.state))
+                self.prev_behavior = self.behavior
+                self.prev_state = self.state
             self.Robot_Moving()
             switcher = {
-                INIT: self.Beginer_Strategy,
+                INIT: self.Init_Strategy,
                 BEGINER: self.Beginer_Strategy,
                 WEB_GO: self.web_go_Strategy,
                 FIND_BALL: self.Find_Ball_Strategy3,
@@ -1075,9 +1083,11 @@ class Strategy(NodeHandle):
             run_Process()
 
         elif self._start == -1:
+            # print(self._start)          #
             self.state = 0
             self.behavior = INIT
         else:
+            #print(self._start)          #
             self.Robot_Stop()
             self.state = 0
             self.behavior = INIT
@@ -1101,11 +1111,12 @@ def main():
 
     strategy = Strategy()
     rate = rospy.Rate(30)   # 30 hz
-
     while not rospy.is_shutdown():
         if(strategy._pos):
+        #     print(strategy._pos)                #
+        # else:                                   #
             # strategy.Process()
-            strategy.Process2()
+            strategy.Process()
         rate.sleep()
     try:    #Blocks that monitor for errors
         rospy.spin()

@@ -141,7 +141,9 @@ class NodeHandle(object):
         self.vel_x = 0.3
         self.vel_z = 0.2
         self.error_ang = 3.0
-        self.error_dis = 0.3
+        self.error_dis = 0.05
+
+
         self.find_ball_vel_z = 0.6
         self.goal_error_ang = 0.5
         self.slow_vel_x = 0.2
@@ -283,6 +285,7 @@ class Strategy(NodeHandle):
         self.angleFor_findBall = 0
         self.getAngle_once = False
         self.prev_goal = None       #for print once
+        self.web_error = 0
 
 
         print("Strategy init done")
@@ -380,15 +383,16 @@ class Strategy(NodeHandle):
         min_distance_angle = 0
         for i in range(len(self._scan) - 10):  # -10 debug
             # left and right too close
-            if((i < 80 or i > 280) and self._scan[i] < 0.8):
-                if(self._scan[i] < 0.45):  # too close
-                    have_obstale = True
-                elif(i > 280):  # Left side
-                    if(math.fabs(math.sin(360 - i) * self._scan[i]) > 0.4):
-                        have_obstale = True
-                elif (i < 80):  # Right side
-                    if (math.fabs(math.sin(i) * self._scan[i]) > 0.4):
-                        have_obstale = True
+            if((i < 30 or i > 330) and self._scan[i] < 0.6):
+                have_obstale = True
+            # if(self._scan[i] < 0.45):  # too close
+            #     have_obstale = True
+            # elif(i > 280):  # Left side
+            #     if(math.fabs(math.sin(360 - i) * self._scan[i]) > 0.4):
+            #         have_obstale = True
+            # elif (i < 80):  # Right side
+            #     if (math.fabs(math.sin(i) * self._scan[i]) > 0.4):
+            #         have_obstale = True
             elif(i > len(self._scan)):  # debug
                 break
             # scan value less than avoidance distance
@@ -492,16 +496,16 @@ class Strategy(NodeHandle):
         if((len(self.web_axis) != 0 or len(self.web_ang) != 0) or self.state == 2):
             if(self.state == 0 or self.state == 2):
                 RPang = self.Get_RP_Angle(
-                    self.goal) - self._front if(self.state == 0) else self.goalang - self._front
+                                self.goal) - self._front if(self.state == 0) else self.goalang - self._front
                 RPang = Norm_Angle(RPang)
                 if(abs(RPang) > self.error_ang):
                     z = self.z_max_speed if(RPang > 0) else -self.z_max_speed
                     self.Robot_Vel([0, z])
                 else:
                     self.Robot_Stop()
-                    self.state = 1 if(self.state == 0) else 2
                     self.behavior = FIND_BALL if(
-                        self.state == 2) else self.behavior
+                    self.state == 2) else self.behavior
+                    self.state = 1 if(self.state == 0) else 0
             elif(self.state == 1):
                 if(self.prev_goal != self.goal):
                     print(self.goal)
@@ -511,16 +515,25 @@ class Strategy(NodeHandle):
                 RPang = Norm_Angle(self.Get_RP_Angle(self.goal) - self._front)
                 if(RPdis > self.error_dis):
                     if(self.prev_RPdis >= RPdis):
+                        # print("{}  {}".format(self.prev_RPdis,RPdis))
                         x = self.x_speed_planning(RPdis)
                         z = self.z_speed_planning(RPang) if(
                             abs(RPang) > self.error_ang) else 0
                     else:
                         x = 0
                         z = 0
+                        # print("DIS = {}".format(RPdis))
+                        self.web_error = self.web_error + 1
+                        if(self.web_error >= 7):
+                            self.web_error = 0
+                            self.state = 2
+                            self.goalang = self.goalang if(self.web_ang == []) else self.web_ang.pop(0)
+                            self.prev_RPdis = 999
                         # if(RPdis < 0.3):# exceed
                         # 	self.state = 0
                     if(RPdis > self.avoid_error_dis):  # Avoidance
                         _obstacle, _have_obstale = self.Avoidance_Strategy()
+                        self.web_error = 0
                         if(_have_obstale == True):
                             x = self.slow_vel_x
                             z = z * 0.8 + _obstacle
@@ -598,7 +611,6 @@ class Strategy(NodeHandle):
                 self.state = 0
 
     def Find_Ball_Strategy2(self):
-        # print(1)
         if(self.state == 0):
             # print(0)
             if(self.lostball == False):
@@ -619,7 +631,7 @@ class Strategy(NodeHandle):
                 self.getAngle_once = True
             RPang = Norm_Angle((self.angleFor_findBall+self.findang) - self._front)
 
-            print("f+f  {}  F  {}  G {}".format(self.angleFor_findBall+self.findang,self._front,RPang))
+            # print("f+f  {}  F  {}  G {}".format(self.angleFor_findBall+self.findang,self._front,RPang))
 
             if(abs(RPang) > self.error_ang):
                 if(RPang>0):
@@ -635,7 +647,7 @@ class Strategy(NodeHandle):
         elif(self.state == 1 or self.state == 2):
             RPang = Norm_Angle((self.angleFor_findBall-self.findang) - self._front)
 
-            print("f-f  {}  F  {}  G {}".format(self.angleFor_findBall-self.findang,self._front,RPang))
+            # print("f-f  {}  F  {}  G {}".format(self.angleFor_findBall-self.findang,self._front,RPang))
 
             if(abs(RPang) > self.error_ang):
                 if(RPang>0):
@@ -747,6 +759,7 @@ class Strategy(NodeHandle):
             color = self.ballcolor
             if(self._ballsColor == self.ballcolor):
                 color = self._ballsColor
+                print("{}".format(color))
             if(color != None):
                 RBang = self._ballsAng
                 if(abs(RBang) > self.error_ang):
@@ -991,22 +1004,19 @@ class Strategy(NodeHandle):
             if(self._pos[0] > front_goal[0]):
                 self.Robot_Stop()
                 self.state = 2 if(self._front >= 0) else 3
-            if(RPdis > self.error_dis):
+            if(RPdis >= self.error_dis):
 
-                if(self.prev_RPdis >= RPdis):
-                    x = self.x_speed_planning(RPdis)
-                    if(abs(RPang) > self.error_ang):
-                        if(RPang > 0):
-                            z = self.z_speed_planning(RPang)
-                        else:
-                            z = self.z_speed_planning(RPang)
-                    else :
-                        z = 0
-                else:
-                    x = 0
+                # if(self.prev_RPdis >= RPdis):
+                x = self.x_speed_planning(RPdis)
+                if(abs(RPang) > self.error_ang):
+                    x = self.slow_vel_x * 0.65
+                    z = self.z_speed_planning(RPang)
+                else :
                     z = 0
-                    if(RPdis < self.error_dis):
-                        self.state = 0
+                # else:
+                #     x = 0
+                #     z = 0
+                #     print(888)
                 if(RPdis > self.avoid_error_dis):
                     _obstacle, _have_obstale = self.Avoidance_Strategy()
                     if(_have_obstale == True):
@@ -1075,7 +1085,7 @@ class Strategy(NodeHandle):
                 self.web_set_up = False
             if(self.web_set_up != True):
                 RPang = Norm_Angle(self.Get_RP_Angle([1.5,0]) - self._front)
-                print(RPang)
+                # print(RPang)
                 if(abs(RPang) > self.error_ang):
                     if(RPang>0):
                         z = self.z_max_speed

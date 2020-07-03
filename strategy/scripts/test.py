@@ -1,32 +1,20 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-+
 
-print("1")
+class test(object):
+    def __init__(self):
+        self.test_num = [0,1,2,3]
+        self.Q = None
 
-a = []
+    def print_num(self):
+        self.Q = self.test_num
+        print(self.Q)
 
-if(len(a)==0):
-	print("0")
-
-
-
-
-# class test(object):
-#     def __init__(self):
-#         self.test_num = [0,1,2,3]
-#         self.Q = None
-
-#     def print_num(self):
-#         self.Q = self.test_num
-#         print(self.Q)
-
-# def Norm_Angle(angle):
-# 	if(angle > 180):
-# 		angle -= 360
-# 	elif(angle < -180):
-# 		angle += 360
-# 	return angle
-# print(Norm_Angle(259),Norm_Angle(439))
+def Norm_Angle(angle):
+	if(angle > 180):
+		angle -= 360
+	elif(angle < -180):
+		angle += 360
+	return angle
+print(Norm_Angle(259),Norm_Angle(439))
 
 # switcher ={
 #     0 : "one",
