@@ -273,7 +273,7 @@ class Strategy(NodeHandle):
                           3: [3.1, 0.6],
                           4: [3.1, -0.3]}
         self.prev_RPdis = 999  # RP=robot pose
-        self.findang = 30
+        self.findang = 45
         self.ballcolor = None
         self.balldis = 999
         self.ballang = 999
@@ -377,13 +377,13 @@ class Strategy(NodeHandle):
         obstacle_num = 0
         avoidance_distance = 0.5
         avoidance_angle = 45
-        avoidance_vel = 0.5
+        avoidance_vel = 0.6
         have_obstale = False
         min_distance = 999
         min_distance_angle = 0
-        for i in range(len(self._scan) - 10):  # -10 debug
+        for i in range(len(self._scan) - 1):  # -10 debug
             # left and right too close
-            if((i < 30 or i > 330) and self._scan[i] < 0.6):
+            if((i < 60 or i > 300) and self._scan[i] < 0.6):
                 have_obstale = True
             # if(self._scan[i] < 0.45):  # too close
             #     have_obstale = True
@@ -412,11 +412,12 @@ class Strategy(NodeHandle):
                 obstacle = avoidance_vel
             elif(obstacle < avoidance_vel * -1):
                 obstacle = avoidance_vel * -1
-        obstacle = obstacle * 1.2
+        obstacle = obstacle * 1.3
         add_range = 20
         if(min_distance_angle < (0 + add_range) or min_distance_angle > (360 - add_range)):
             if(min_distance < 0.4):
                 obstacle = obstacle * 3.5
+        # print("{} {}".format(obstacle,have_obstale))
         return obstacle, have_obstale
 
     # strategy
@@ -476,7 +477,7 @@ class Strategy(NodeHandle):
                         _obstacle, _have_obstale = self.Avoidance_Strategy()
                         if(_have_obstale == True):
                             x = self.slow_vel_x
-                            z = z * 0.8 + _obstacle
+                            z = z * 0.75 + _obstacle
                         else:
                             z += _obstacle
                     self.Robot_Vel([x, z])
@@ -524,6 +525,7 @@ class Strategy(NodeHandle):
                         z = 0
                         # print("DIS = {}".format(RPdis))
                         self.web_error = self.web_error + 1
+                        print("Pre_dis < RP_dis {}".format(self.web_error))
                         if(self.web_error >= 7):
                             self.web_error = 0
                             self.state = 2
@@ -536,7 +538,7 @@ class Strategy(NodeHandle):
                         self.web_error = 0
                         if(_have_obstale == True):
                             x = self.slow_vel_x
-                            z = z * 0.8 + _obstacle
+                            z = z * 0.75 + _obstacle
                         else:
                             z += _obstacle
                     self.Robot_Vel([x, z])
@@ -610,7 +612,7 @@ class Strategy(NodeHandle):
                 self.behavior = CATCH_BALL
                 self.state = 0
 
-    def Find_Ball_Strategy2(self):
+    def Find_Ball_Strategy2(self):#usimg
         if(self.state == 0):
             # print(0)
             if(self.lostball == False):
@@ -750,7 +752,7 @@ class Strategy(NodeHandle):
             else:
                 RBang = Norm_Angle(self.ballang - self._front)
                 if(abs(RBang) > 2):
-                    z = self.vel_z if(RBang > 0) else -self.vel_z
+                    z = self.z_max_speed if(RBang > 0) else -self.z_max_speed
                     self.Robot_Vel([0, z])
                 else:
                     self.Robot_Stop()
@@ -759,7 +761,7 @@ class Strategy(NodeHandle):
             color = self.ballcolor
             if(self._ballsColor == self.ballcolor):
                 color = self._ballsColor
-                print("{}".format(color))
+                print("{}".format(self.color_to_strings(color)))
             if(color != None):
                 RBang = self._ballsAng
                 if(abs(RBang) > self.error_ang):
@@ -787,7 +789,7 @@ class Strategy(NodeHandle):
                     if(self.prev_RPdis >= RPdis):
                         x = self.vel_x if(RPdis > 220) else self.slow_vel_x
                         if(abs(RBang) > self.error_ang):
-                            z = self.vel_z if(RBang > 0) else -self.vel_z
+                            z = self.z_max_speed if(RBang > 0) else -self.z_max_speed
                         else:
                             z = 0
                     else:
@@ -799,12 +801,18 @@ class Strategy(NodeHandle):
                         _obstacle, _have_obstale = self.Avoidance_Strategy()
                         if(_have_obstale == True):
                             x = self.slow_vel_x
-                        z += _obstacle
+                            z = z * 0.75 + _obstacle
+                            # print("{}".format(RPdis))
+                        else:
+                            z += _obstacle
                     self.Robot_Vel([x, z])
                     self.prev_RPdis = RPdis
                 else:
                     x = 0.05
+                    z = 0
+                    self.Robot_Vel([x,z])
                     self.Catch_Ball(1)
+                    self.Robot_Stop()
                     switcher = {
                         0: GOAL,
                         1: SHORT_SHOOT,
@@ -853,7 +861,7 @@ class Strategy(NodeHandle):
                     _obstacle, _have_obstale = self.Avoidance_Strategy()
                     if(_have_obstale == True):
                         x = self.slow_vel_x
-                        z = z * 0.8 + _obstacle
+                        z = z * 0.75 + _obstacle
                     else:
                         z += _obstacle
                 self.Robot_Vel([x, z])
@@ -892,7 +900,7 @@ class Strategy(NodeHandle):
                     _obstacle, _have_obstale = self.Avoidance_Strategy()
                     if(_have_obstale == True):
                         x = self.slow_vel_x
-                        z=z*0.8+_obstacle
+                        z = z * 0.8 + _obstacle
                     else:
                         z += _obstacle
 
@@ -970,8 +978,7 @@ class Strategy(NodeHandle):
             if(self.web_set_up and len(self.web_axis) != 0 and len(self.web_ang) != 0):
                 self.behavior = BEGINER
             else:
-                self.behavior = FIND_BALL if(
-                    self._pos[0] > 1.5) else FIND_BALL2
+                self.behavior = FIND_BALL
 
             self.ballcolor = None
             self.balldis = 999
@@ -1021,7 +1028,7 @@ class Strategy(NodeHandle):
                     _obstacle, _have_obstale = self.Avoidance_Strategy()
                     if(_have_obstale == True):
                         x = self.slow_vel_x
-                        z = z * 0.8 + _obstacle
+                        z = z * 0.75 + _obstacle
                     else:
                         z += _obstacle
                 self.Robot_Vel([x, z])
@@ -1162,7 +1169,8 @@ class Strategy(NodeHandle):
                 FIND_BALL: self.Find_Ball_Strategy2,
                 CATCH_BALL: self.Catch_Ball_Strategy,
                 GOAL: self.Goal_Strategy,
-                SHORT_SHOOT: self.Short_Shoot_Strategy
+                SHORT_SHOOT: self.Short_Shoot_Strategy,
+                FAR_SHOOT: self.Far_Shoot_Strategy
             }
             run_Process = switcher.get(self.behavior, self.Robot_Stop)
             run_Process()
